@@ -15,6 +15,7 @@ const matchSchema = new mongoose.Schema({
     enum: ['Ground 1', 'Ground 2'],
     required: true
   },
+  overs: { type: Number, required: true },
   status: {
     type: String,
     enum: ['scheduled', 'live', 'completed'],
