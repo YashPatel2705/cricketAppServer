@@ -8,6 +8,33 @@ require('dotenv').config();
 const app = express();
 const server = http.createServer(app);
 
+// ✅ Debug middleware - FIRST
+app.use((req, res, next) => {
+  console.log(`📨 ${req.method} ${req.url}`);
+  next();
+});
+
+// ✅ Essential middleware - SECOND
+app.use(cors({
+  origin: 'http://localhost:5173',
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true
+}));
+app.use(express.json());
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// ✅ Import routes
+const matchesRouter = require('./routes/matches');
+const teamsRouter = require('./routes/teams');
+const pointsRouter = require('./routes/points');
+const playersRouter = require('./routes/Players');
+
+// ✅ Register routes - THIRD
+app.use('/api/matches', matchesRouter);
+app.use('/api/teams', teamsRouter);
+app.use('/api/points', pointsRouter);
+app.use('/api/players', playersRouter);
+
 // ✅ Setup Socket.io
 const { Server } = require('socket.io');
 const io = new Server(server, {
@@ -24,22 +51,11 @@ io.on('connection', (socket) => {
     console.log('🔴 Socket disconnected:', socket.id);
   });
 
-  // 👇 Example listener
   socket.on('score:update', (data) => {
     console.log('📡 Received score update:', data);
     io.emit('score:updated', data);
   });
 });
-
-// ✅ Middleware
-app.use(cors());
-app.use(express.json());
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
-// ✅ Routes
-app.use('/api/players', require('./routes/Players'));
-app.use('/api/teams', require('./routes/teams'));
-app.use('/api/matches', require('./routes/matches'));
 
 // ✅ MongoDB
 const MONGO_URI = process.env.MONGO_URI;
@@ -59,4 +75,4 @@ mongoose.connect(MONGO_URI)
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server running at http://localhost:${PORT}`);
-});
+}); 
